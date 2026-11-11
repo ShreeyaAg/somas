@@ -1,0 +1,11 @@
+/data/
+/work/
+/output/
+/attachments/
+*.db
+*.db-wal
+*.db-shm
+/somas
+/experiment.json*
+/comparison.json*
+.env
