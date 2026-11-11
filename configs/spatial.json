@@ -1,0 +1,11 @@
+{
+  "spatial": true,
+  "auto_patches": true,
+  "agents_per_patch": 5,
+  "harvest_access": "open",
+  "strategies": [
+    "random",
+    "cooperative",
+    "roaming"
+  ]
+}

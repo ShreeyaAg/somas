@@ -98,13 +98,13 @@ func TestCarryMemoryExclusivity(t *testing.T) {
 	c := game.DefaultConfig()
 	c.CarryMemory = true
 	q := NewRequest{Config: c, MemoryNamespace: "learning"}
-	if _, err = s.create("a", q); err != nil {
+	if _, err = createSafely(s, "a", q); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = s.create("a", q); err == nil {
+	if _, err = createSafely(s, "a", q); err == nil {
 		t.Fatal("concurrent namespace allowed")
 	}
-	if _, err = s.create("b", q); err != nil {
+	if _, err = createSafely(s, "b", q); err != nil {
 		t.Fatal("independent group blocked")
 	}
 }
@@ -122,13 +122,13 @@ func TestCarriedMemorySurvivesApplicationRestart(t *testing.T) {
 	c.CarryMemory = true
 	c.Strategies = []string{"cooperative"}
 	q := NewRequest{Config: c, MemoryNamespace: "learning"}
-	r, err := s.create("a", q)
+	r, err := createSafely(s, "a", q)
 	if err != nil {
 		t.Fatal(err)
 	}
 	live := s.live[r.ID]
 	for live.record.State.Phase != "complete" {
-		s.advance(live)
+		advanceSafely(s, live)
 	}
 	previous := live.engine.Memories()["agent-001"]["decisions"]
 	if previous == "" {
@@ -143,14 +143,14 @@ func TestCarriedMemorySurvivesApplicationRestart(t *testing.T) {
 	defer db.Close()
 	s = New(db, reg, map[string]string{}, web.Handler())
 	defer s.Close()
-	next, err := s.create("a", q)
+	next, err := createSafely(s, "a", q)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if s.live[next.ID].engine.Memories()["agent-001"]["decisions"] != previous {
 		t.Fatal("memory lost across restart")
 	}
-	fresh, err := s.create("b", q)
+	fresh, err := createSafely(s, "b", q)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +158,7 @@ func TestCarriedMemorySurvivesApplicationRestart(t *testing.T) {
 		t.Fatal("cross-group carry leak")
 	}
 	c.CarryMemory = false
-	clean, err := s.create("a", NewRequest{Config: c})
+	clean, err := createSafely(s, "a", NewRequest{Config: c})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -166,3 +166,11 @@ func TestCarriedMemorySurvivesApplicationRestart(t *testing.T) {
 		t.Fatal("fresh experiment inherited memory")
 	}
 }
+
+// Direct internal helpers must use the same lock as HTTP handlers and scheduler.
+func createSafely(s *Server, owner string, q NewRequest) (store.Run, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.create(owner, q)
+}
+func advanceSafely(s *Server, r *liveRun) { s.mu.Lock(); defer s.mu.Unlock(); s.advance(r) }

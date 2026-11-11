@@ -74,3 +74,7 @@ There is **no HTTP code-upload or execution endpoint**. The MVP uses an operator
 4. Approve a commit and build an immutable binary. Back up SQLite, stop the shared service, deploy that binary and restart with its existing data directory and group config.
 
 Only approved code becomes selectable. Rollback uses the previous binary and a compatible database. An actual untrusted runner would require process/container isolation, CPU/memory/time limits and a narrow RPC protocol; it is deliberately deferred. Go interfaces and panic recovery alone do not isolate arbitrary code.
+
+## Spatial strategies
+
+The optional `Move` method returns an absolute neighbour tile once per round. Embed `Base` to keep the default stay-in-place implementation; no interface migration is required for existing strategies. `Observation.World` and `Self.Position` are copied backend state. `Institution` is your membership; `OccupiedPatch` is your physical harvesting location. Use `game.StepToward` or inspect the `roaming` baseline for an example. Movement never changes membership or lets agents bypass patch access rules. See [docs/SPATIAL.md](docs/SPATIAL.md) for costs, timing and automatic world sizing.

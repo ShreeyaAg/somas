@@ -1,6 +1,6 @@
 # SOMAS 2026 — Amoeboids laboratory
 
-A working Go simulation and shared browser dashboard for **AmoeBoids and the Two Pools Problem**. Student strategies implement a public Go interface; the engine owns resources, observations, governance and message delivery. SQLite stores private memories, institution snapshots and experiment history. No AWS, Node build, or external database is needed.
+A working Go simulation, spatial grid and shared browser dashboard for **AmoeBoids and the Two Pools Problem**. Student strategies implement a public Go interface; the engine owns resources, observations, governance and message delivery. SQLite stores private memories, institution snapshots and experiment history. No AWS, Node build, or external database is needed.
 
 ## Start locally
 
@@ -30,6 +30,12 @@ Each token must be unique and at least 16 characters. Group names are configured
 
 ![Amoeboids dashboard](docs/dashboard.png)
 
+## Grid world and automatic patches
+
+New browser experiments enable a shared grid with real movement and automatic patch sizing. Set a target agents-per-patch value: 100 agents at a target of 5 creates 20 independent patches and expands the map automatically. Select member-only or open visitor harvesting. Agent positions, movement costs and resource access are enforced by Go, and replay restores actual saved positions. Existing strategies inherit a stay-in-place default; `roaming` demonstrates a spatial policy.
+
+See [docs/SPATIAL.md](docs/SPATIAL.md) for movement rules, configuration and current scaling limits. Core/CLI defaults retain classic mode for compatibility; `-config configs/spatial.json` enables the spatial experiment. No agents are added during an active experiment.
+
 ## Experiments
 
 ```sh
@@ -47,9 +53,10 @@ Partial JSON files override defaults. When `-config` is supplied, file values ta
 |---|---|
 | `pkg/game/types.go` | Public agent interface, observations, config, memory capabilities |
 | `pkg/game/engine.go` | State ownership, formation, phase scheduling, framework adapter |
-| `pkg/game/rules.go`, `operational.go` | Productivity, resource bounds and operational mechanics |
+| `pkg/game/rules.go`, `operational.go`, `spatial_operational.go` | Productivity, resource bounds and operational mechanics |
 | `pkg/game/governance.go`, `communication.go` | AVA proposals/voting and scoped typed messages |
-| `pkg/agents` | Random and cooperative baselines and registry |
+| `pkg/game/spatial.go` | Population sizing, world layout, validated movement |
+| `pkg/agents` | Random, cooperative and roaming baselines and registry |
 | `examples/custom` | Compiling student template with integration test |
 | `internal/store` | Transactional SQLite run/history/memory storage |
 | `internal/api` | Group authentication, run controls, exports and scheduler |
@@ -76,6 +83,6 @@ The MVP is intended for modest cohort experiments, not hostile compute workloads
 
 ## Implemented scope and extension points
 
-Working: multiple independent institutions, seeded formation and strategy-selected membership at reformation; political passes with majority voting; voluntary harvest quotas and alternative orders; CTK tiers/productivity/reset; sunlight/clouds, brain costs, eating, decay, death/revival, rot and utility; private strategy memory; typed within-institution messages; multi-group controls; phase replay; experiments and exports; university v2 agents and lifecycle adapter.
+Working: shared spatial grid, automatic population-based patch/map sizing, validated movement, configurable physical harvesting access; multiple independent institutions, seeded formation and strategy-selected membership at reformation; political passes with majority voting; voluntary harvest quotas and alternative orders; CTK tiers/productivity/reset; sunlight/clouds, brain costs, eating, decay, death/revival, rot and utility; private strategy memory; typed within-institution messages; multi-group controls; phase replay; experiments and exports; university v2 agents and lifecycle adapter.
 
 Deliberately deferred: donations/trade, paid auditing and sanctions, exclusion/join votes between reformations, reproduction/aging, arbitrary AVA schema and weighted ballots, remote untrusted agent runners, HTTP source uploads and an online editor. Contribution identities are private to agents by default; the alternative public setting is explicit. The group dashboard is an operator view of its own simulation, not an agent observation. Cross-group comparisons use intentionally shared exports; no group data is published automatically.

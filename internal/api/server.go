@@ -175,7 +175,7 @@ func (s *Server) create(owner string, q NewRequest) (store.Run, error) {
 	if err != nil {
 		return store.Run{}, err
 	}
-	r := store.Run{ID: id, Group: owner, Config: q.Config, State: e.Snapshot()}
+	r := store.Run{ID: id, Group: owner, Config: e.Config(), State: e.Snapshot()}
 	if err = s.db.Save(r, scope, e.Memories(), 0); err != nil {
 		return store.Run{}, err
 	}
@@ -302,10 +302,10 @@ func (s *Server) api(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "text/csv")
 				w.Header().Set("Content-Disposition", "attachment; filename=experiment.csv")
 				cw := csv.NewWriter(w)
-				_ = cw.Write([]string{"round", "cycle", "phase", "utility", "average_utility", "cpr", "alive", "ctk", "contributors", "free_riders", "cooperation", "sustainability", "accepted", "violations", "membership_changes"})
+				_ = cw.Write([]string{"round", "cycle", "phase", "utility", "average_utility", "cpr", "alive", "ctk", "contributors", "free_riders", "cooperation", "sustainability", "accepted", "violations", "membership_changes", "moves"})
 				for _, st := range h {
 					m := st.Metrics
-					_ = cw.Write([]string{fmt.Sprint(st.Round), fmt.Sprint(st.Cycle), st.Phase, fmt.Sprint(m.Utility), fmt.Sprint(m.AverageUtility), fmt.Sprint(m.CPR), fmt.Sprint(m.Alive), fmt.Sprint(m.CTK), fmt.Sprint(m.Contributors), fmt.Sprint(m.FreeRiders), fmt.Sprint(m.Cooperation), fmt.Sprint(m.Sustainability), fmt.Sprint(m.Accepted), fmt.Sprint(m.Violations), fmt.Sprint(m.MembershipChanges)})
+					_ = cw.Write([]string{fmt.Sprint(st.Round), fmt.Sprint(st.Cycle), st.Phase, fmt.Sprint(m.Utility), fmt.Sprint(m.AverageUtility), fmt.Sprint(m.CPR), fmt.Sprint(m.Alive), fmt.Sprint(m.CTK), fmt.Sprint(m.Contributors), fmt.Sprint(m.FreeRiders), fmt.Sprint(m.Cooperation), fmt.Sprint(m.Sustainability), fmt.Sprint(m.Accepted), fmt.Sprint(m.Violations), fmt.Sprint(m.MembershipChanges), fmt.Sprint(m.Moves)})
 				}
 				cw.Flush()
 				return

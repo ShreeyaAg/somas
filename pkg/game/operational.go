@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-func (e *Engine) operate() {
+func (e *Engine) operateLegacy() {
 	c := e.config
 	for gi := range e.institutions {
 		g := &e.institutions[gi]

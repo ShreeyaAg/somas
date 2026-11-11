@@ -12,7 +12,7 @@ All `/api/` requests require `Authorization: Bearer GROUP_TOKEN`. Request bodies
 | POST | `/api/runs/{id}/control` | `{"action":"play"}` / pause / step / reset / archive; speed also needs `"speed_ms":500` |
 | GET | `/api/runs/{id}/history` | Ordered phase snapshots, including formation and completion |
 | GET | `/api/runs/{id}/export.json` | Config and history |
-| GET | `/api/runs/{id}/export.csv` | Phase metrics in CSV |
+| GET | `/api/runs/{id}/export.csv` | Phase metrics in CSV (including cumulative moves) |
 | POST | `/api/memory/reset` | `{"namespace":"learning"}` deletes own carried memory; blocked during unfinished use |
 
 HTTP run creation requires a complete config: fetch `/api/defaults` and modify it. The CLI instead merges partial config files over defaults. `carry_memory:true` requires an explicit namespace, length 1–64. `speed_ms` is 50–10000 milliseconds **per phase**, not per round. `step` pauses automatic play and advances one phase. `reset` restores the original config, RNG seed and memory loaded at run creation; history appends a new formation state. It does not delete old snapshots. `archive` evicts a completed live engine, retaining database history; archived controls return 409. Server restart archives every run.
@@ -28,3 +28,5 @@ curl -fsS -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/defaults
 curl -fsS -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"action":"step"}' http://localhost:8080/api/runs/RUN_ID/control
 ```
+
+Spatial requests may set `spatial`, `auto_patches`, `agents_per_patch`, minimum `grid_width`/`grid_height`, movement costs and `harvest_access`. When automatic sizing is enabled, the manual institution count is ignored. The returned run config is normalized: patch count and dimensions may differ from the request. Snapshots include `world` geometry, each player's `position` and cumulative `moves`; peer positions are public. Schema additions need no SQLite migration. See SPATIAL.md.
