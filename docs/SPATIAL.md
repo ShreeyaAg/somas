@@ -71,3 +71,9 @@ The config file contains partial overrides of existing defaults. In the browser,
 The existing 200-agent MVP limit remains intentional. Automatic world growth removes manual provisioning work; it is not unlimited compute or horizontal scaling. Simulation execution remains one Go process with SQLite and serialized trusted strategy calls. Large maps can be inspected using zoom and scroll. Adding/removing agents during an active run, heterogeneous patch capacities, negotiable access AVAs and dynamic patch ownership are deferred.
 
 An example [100-agent / 20-patch dashboard capture](grid-100-agents.png) is included alongside the main dashboard screenshot.
+
+## Sunlight and clouds (spatial mode)
+
+In spatial mode the cloud field is part of the world. A handful of soft cloud blobs drift east across the grid each round (`World.Clouds`, one cover fraction per tile, between 0 and `cloud`). At the start of every round each living agent receives `sun × (1 − cloud over its own tile)` brain, capped at `max_brain`. Standing under cloud therefore costs energy, and the map draws the field as grey tiles with a sun/summary line above the grid. Classic mode keeps the original independent random cloud draw per agent. The cloud field is seeded from the experiment seed, so runs stay reproducible.
+
+The `random` strategy still takes random *actions* but no longer wanders: it walks to and stays on its own patch, like `cooperative`. Use `game.Wander` explicitly if you want a random-walk baseline.

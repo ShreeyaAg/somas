@@ -68,6 +68,83 @@ func (e *Engine) layoutWorld() {
 		}
 		p.Position = Position{X: patch.Origin.X + slot%2, Y: patch.Origin.Y + (slot/2)%2}
 	}
+	if e.config.Spatial {
+		e.seedClouds()
+		e.paintClouds()
+	}
+}
+// cloudBlob is one drifting cloud: a soft disc of radius R and peak density D.
+type cloudBlob struct{ X, Y, R, D float64 }
+
+func (e *Engine) newCloud(initial bool) cloudBlob {
+	w, h := float64(e.world.Width), float64(e.world.Height)
+	c := cloudBlob{R: 1.5 + 2*e.rng.Float64(), Y: e.rng.Float64() * h, D: .5 + .5*e.rng.Float64()}
+	if initial {
+		c.X = e.rng.Float64() * w
+	} else {
+		c.X = -c.R
+	}
+	return c
+}
+
+// seedClouds creates the cloud population once per experiment (it survives re-formation).
+func (e *Engine) seedClouds() {
+	if len(e.clouds) > 0 || e.world.Width == 0 {
+		return
+	}
+	for i := 0; i < max(2, e.world.Width*e.world.Height/30); i++ {
+		e.clouds = append(e.clouds, e.newCloud(true))
+	}
+}
+
+// driftClouds moves every cloud (wind blows east with some wobble) and repaints the field.
+func (e *Engine) driftClouds() {
+	e.seedClouds()
+	w, h := float64(e.world.Width), float64(e.world.Height)
+	for i := range e.clouds {
+		c := &e.clouds[i]
+		c.X += 1 + e.rng.Float64() - .5
+		c.Y += e.rng.Float64() - .5
+		c.R = Clamp(c.R+(e.rng.Float64()-.5)*.6, 1.5, 3.5)
+		c.D = Clamp(c.D+(e.rng.Float64()-.5)*.3, .3, 1)
+		if c.X-c.R > w || c.Y < -c.R || c.Y > h+c.R {
+			*c = e.newCloud(false)
+		}
+	}
+	e.paintClouds()
+}
+
+// paintClouds rasterises the blobs into World.Clouds without consuming randomness.
+func (e *Engine) paintClouds() {
+	w, h := e.world.Width, e.world.Height
+	e.world.Clouds = make([]float64, w*h)
+	if e.config.Cloud <= 0 {
+		return
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			sum := 0.0
+			for _, c := range e.clouds {
+				dx, dy := float64(x)+.5-c.X, float64(y)+.5-c.Y
+				if d := math.Sqrt(dx*dx + dy*dy); d < c.R {
+					sum += c.D * (1 - d/c.R)
+				}
+			}
+			e.world.Clouds[y*w+x] = math.Round(Clamp(sum, 0, 1)*e.config.Cloud*1000) / 1000
+		}
+	}
+}
+
+// cloudFor returns the cloud cover that blocks this player's sunlight this round.
+func (e *Engine) cloudFor(p Player) float64 {
+	if e.config.Spatial {
+		w := e.world.Width
+		if i := p.Position.Y*w + p.Position.X; p.Position.X >= 0 && p.Position.X < w && i >= 0 && i < len(e.world.Clouds) {
+			return e.world.Clouds[i]
+		}
+		return 0
+	}
+	return e.rng.Float64() * e.config.Cloud
 }
 func (p Patch) Contains(pos Position) bool {
 	return pos.X >= p.Origin.X && pos.X < p.Origin.X+p.Width && pos.Y >= p.Origin.Y && pos.Y < p.Origin.Y+p.Height

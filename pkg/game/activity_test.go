@@ -138,8 +138,20 @@ func TestActivitySunlightCapAndDeadAgentReset(t *testing.T) {
 	e.Step()
 	for _, p := range e.players {
 		a := p.Activity
-		if a == nil || a.SunlightGain != 0 || a.SunlightAvailable <= 0 || a.SunlightBlocked != a.SunlightAvailable || a.Cloud < 0 || a.Cloud > c.Cloud {
-			t.Fatal("sunlight at cap not recorded correctly")
+		if a == nil {
+			t.Fatal("activity nil")
+		}
+		if a.SunlightGain != 0 {
+			t.Fatalf("gain!=0: gain=%v start=%v brain=%v cloud=%v avail=%v", a.SunlightGain, a.StartBrain, p.Brain, a.Cloud, a.SunlightAvailable)
+		}
+		if a.SunlightAvailable <= 0 {
+			t.Fatalf("avail<=0: avail=%v cloud=%v", a.SunlightAvailable, a.Cloud)
+		}
+		if a.SunlightBlocked != a.SunlightAvailable {
+			t.Fatalf("blocked!=avail: blocked=%v avail=%v", a.SunlightBlocked, a.SunlightAvailable)
+		}
+		if a.Cloud < 0 || a.Cloud > c.Cloud {
+			t.Fatalf("cloud out of range: cloud=%v cfgCloud=%v", a.Cloud, c.Cloud)
 		}
 	}
 	e.Step()

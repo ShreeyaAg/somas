@@ -118,6 +118,10 @@ type World struct {
 	Width   int     `json:"width"`
 	Height  int     `json:"height"`
 	Patches []Patch `json:"patches"`
+	// Clouds is a row-major (y*Width+x) cover fraction per tile in [0, Config.Cloud].
+	// It is only populated in spatial mode, where an agent's sunlight depends on the
+	// cloud over its own tile. Clouds drift east a little each round.
+	Clouds []float64 `json:"clouds,omitempty"`
 }
 
 // RoundActivity records actual resource changes applied by the authoritative

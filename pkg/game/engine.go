@@ -27,6 +27,7 @@ type Engine struct {
 	publicMessages []Message
 	votes          []VoteRecord
 	changes        int
+	clouds         []cloudBlob
 	platform       *server.BaseServer[Agent]
 }
 type localMemory struct{ data map[string]string }
@@ -157,6 +158,9 @@ func (e *Engine) Step() bool {
 			e.form()
 		}
 		e.round++
+		if e.config.Spatial {
+			e.driftClouds()
+		}
 		for i := range e.players {
 			p := &e.players[i]
 			p.Contribution = 0
@@ -164,9 +168,9 @@ func (e *Engine) Step() bool {
 			if p.Alive {
 				a := &RoundActivity{Round: e.round, StartBrain: p.Brain, StartBody: p.Body, StartStock: p.Stock}
 				p.Activity = a
-				// This is the same single cloud draw and resource calculation as before;
-				// exposing its realized value adds no randomness or game behavior.
-				a.Cloud = e.rng.Float64() * e.config.Cloud
+				// Classic mode: one random cloud draw per agent. Spatial mode: the drifting
+				// cloud over the agent's tile (see spatial.go), so where you stand matters.
+				a.Cloud = e.cloudFor(*p)
 				a.SunlightAvailable = e.config.Sun * (1 - a.Cloud)
 				p.Brain = min(e.config.MaxBrain, p.Brain+a.SunlightAvailable)
 				a.SunlightGain = p.Brain - a.StartBrain

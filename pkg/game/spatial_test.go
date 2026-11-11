@@ -168,3 +168,38 @@ func TestSpatialConfigurationRejected(t *testing.T) {
 }
 
 var _ agent.IAgent[Agent] = (*movingAgent)(nil)
+
+func TestSpatialSunlightFollowsCloudOverTile(t *testing.T) {
+	c := config()
+	c.Spatial = true
+	c.AutoPatches = true
+	c.Rounds = 6
+	c.Cloud = .8
+	e := mustEngine(t, c, reg(false))
+	if len(e.world.Clouds) != e.world.Width*e.world.Height {
+		t.Fatal("cloud field missing from world")
+	}
+	varied := false
+	for r := 0; r < 6; r++ {
+		e.Step() // sunlight is applied at the start of the round
+		for _, p := range e.players {
+			if p.Activity == nil {
+				continue
+			}
+			want := e.world.Clouds[p.Position.Y*e.world.Width+p.Position.X]
+			if p.Activity.Cloud != want || p.Activity.Cloud > c.Cloud {
+				t.Fatal("agent cloud must equal the cloud over its tile")
+			}
+		}
+		for _, v := range e.world.Clouds {
+			if v != e.world.Clouds[0] {
+				varied = true
+			}
+		}
+		e.Step()
+		e.Step()
+	}
+	if !varied {
+		t.Fatal("clouds should vary across the grid")
+	}
+}

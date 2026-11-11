@@ -53,8 +53,10 @@ func Registry() game.Registry {
 	return r
 }
 
-func (*Random) Move(o game.Observation, _ game.Memory, r *rand.Rand) game.Position {
-	return game.Wander(o, r)
+// Random's *actions* are random, but it does not wander: aimless travel only wastes
+// brain and body. It walks to, then stays on, its own patch (same as Cooperative).
+func (*Random) Move(o game.Observation, m game.Memory, r *rand.Rand) game.Position {
+	return (&Cooperative{}).Move(o, m, r)
 }
 func (*Cooperative) Move(o game.Observation, _ game.Memory, _ *rand.Rand) game.Position {
 	for _, p := range o.World.Patches {
