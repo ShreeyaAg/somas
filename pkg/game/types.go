@@ -119,21 +119,52 @@ type World struct {
 	Height  int     `json:"height"`
 	Patches []Patch `json:"patches"`
 }
+
+// RoundActivity records actual resource changes applied by the authoritative
+// engine. It is display/analysis data, not a strategy decision or private memory.
+type RoundActivity struct {
+	Round             int     `json:"round"`
+	StartBrain        float64 `json:"start_brain"`
+	StartBody         float64 `json:"start_body"`
+	StartStock        float64 `json:"start_stock"`
+	Cloud             float64 `json:"cloud"`
+	SunlightAvailable float64 `json:"sunlight_available"`
+	SunlightGain      float64 `json:"sunlight_gain"`
+	SunlightBlocked   float64 `json:"sunlight_blocked"`
+	ProposalCost      float64 `json:"proposal_cost"`
+	VoteCost          float64 `json:"vote_cost"`
+	MessageCost       float64 `json:"message_cost"`
+	MoveBrainCost     float64 `json:"move_brain_cost"`
+	MoveBodyCost      float64 `json:"move_body_cost"`
+	HarvestCost       float64 `json:"harvest_cost"`
+	Contribution      float64 `json:"contribution"`
+	Harvested         float64 `json:"harvested"`
+	Eaten             float64 `json:"eaten"`
+	BodyGained        float64 `json:"body_gained"`
+	Rotted            float64 `json:"rotted"`
+	Metabolism        float64 `json:"metabolism"`
+	Moves             int     `json:"moves"`
+	Proposals         int     `json:"proposals"`
+	Votes             int     `json:"votes"`
+	Messages          int     `json:"messages"`
+	MoveStatus        string  `json:"move_status"`
+}
 type Player struct {
-	Position     Position `json:"position"`
-	Moves        int      `json:"moves"`
-	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Strategy     string   `json:"strategy"`
-	Institution  int      `json:"institution"`
-	Brain        float64  `json:"brain"`
-	Body         float64  `json:"body"`
-	Stock        float64  `json:"stock"`
-	Alive        bool     `json:"alive"`
-	Utility      float64  `json:"utility"`
-	Violations   int      `json:"violations"`
-	LastAction   string   `json:"last_action"`
-	Contribution float64  `json:"contribution"`
+	Activity     *RoundActivity `json:"activity,omitempty"`
+	Position     Position       `json:"position"`
+	Moves        int            `json:"moves"`
+	ID           string         `json:"id"`
+	Name         string         `json:"name"`
+	Strategy     string         `json:"strategy"`
+	Institution  int            `json:"institution"`
+	Brain        float64        `json:"brain"`
+	Body         float64        `json:"body"`
+	Stock        float64        `json:"stock"`
+	Alive        bool           `json:"alive"`
+	Utility      float64        `json:"utility"`
+	Violations   int            `json:"violations"`
+	LastAction   string         `json:"last_action"`
+	Contribution float64        `json:"contribution"`
 }
 type Rules struct {
 	Quota         float64 `json:"quota"`

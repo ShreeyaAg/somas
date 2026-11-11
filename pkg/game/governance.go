@@ -26,6 +26,10 @@ func (e *Engine) politics() {
 				}
 				proposed = true
 				p.Brain -= e.config.ProposalCost
+				if p.Activity != nil {
+					p.Activity.ProposalCost += e.config.ProposalCost
+					p.Activity.Proposals++
+				}
 				v := VoteRecord{Round: e.round, Institution: gi, Proposer: id, Proposal: q}
 				for _, voter := range g.Members {
 					vp := e.player(voter)
@@ -33,6 +37,10 @@ func (e *Engine) politics() {
 						continue
 					}
 					vp.Brain -= e.config.VoteCost
+					if vp.Activity != nil {
+						vp.Activity.VoteCost += e.config.VoteCost
+						vp.Activity.Votes++
+					}
 					v.Cast++
 					if e.agents[voter].Vote(e.observe(voter), q, e.Memory(voter), e.rng) {
 						v.Yes++

@@ -61,3 +61,9 @@ The spatial revision adds automatic patch/map sizing, cardinal movement, physica
 The main scalability improvement is automatic provisioning, not a claim of unlimited throughput: limits remain 200 agents, one Go scheduler and SQLite. Spatial rules and configurable defaults are detailed in SPATIAL.md. Agents are added at experiment creation; no live agent insertion is implemented.
 
 A headless mixed-strategy check with **200 agents and 40 automatically provisioned patches** completed for three rounds. Running it twice yielded byte-identical JSON, including canonical exported configuration. This is a functional size check, not a sustained-load benchmark.
+
+## Individual visibility and energy revision
+
+The UI now expands shared tiles into non-overlapping agent display slots without changing logical coordinates or collision rules. `activity_test.go` tests actual resource ledgers and caps, including observation isolation and per-round resets. A binary comparison of classic and spatial mixed-strategy runs spanning reformation showed unchanged configurations/game histories after excluding only added activity fields. `go test -race ./...` and `go vet ./...` pass.
+
+`scripts/browser_clarity.py` checks actual rendered agent bounding boxes in classic10/onepatch, spatial100 and spatial200/onepatch scenarios; real API sunlight sums; peragent brain/body/stock/action cards; selection, mobile layout, replay and missing-ledger archived states. This is a rendering/functional size check, not a throughput benchmark. Older snapshots retain their original game data and display unrecorded energy history honestly. See INTERFACE.md for presentation boundaries.

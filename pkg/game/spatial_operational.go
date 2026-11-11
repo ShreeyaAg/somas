@@ -59,6 +59,10 @@ func (e *Engine) operateSpatial() {
 				take = min(take, p.Brain/c.HarvestCost)
 			}
 			p.Stock += take
+			if p.Activity != nil {
+				p.Activity.Harvested += take
+				p.Activity.HarvestCost += take * c.HarvestCost
+			}
 			p.Brain = max(0, p.Brain-take*c.HarvestCost)
 			g.CPR = max(0, g.CPR-take)
 			if take > g.Rules.Quota+1e-9 {
@@ -81,9 +85,16 @@ func (e *Engine) operateSpatial() {
 			p.Stock -= eat
 			p.Body += eat * c.FoodToBody
 			p.Utility += eat
+			if p.Activity != nil {
+				p.Activity.Eaten += eat
+				p.Activity.BodyGained += eat * c.FoodToBody
+			}
 			provision := Clamp(d.Contribute, 0, p.Brain)
 			p.Brain -= provision
 			p.Contribution = provision
+			if p.Activity != nil {
+				p.Activity.Contribution += provision
+			}
 			g.CTK += provision
 			if provision >= c.MinContribution {
 				g.Contributors++
@@ -110,6 +121,10 @@ func (e *Engine) operateSpatial() {
 		p := &e.players[i]
 		if !p.Alive {
 			continue
+		}
+		if p.Activity != nil {
+			p.Activity.Rotted += p.Stock * c.Rot
+			p.Activity.Metabolism += min(p.Body, c.Metabolism)
 		}
 		p.Stock *= 1 - c.Rot
 		p.Body = max(0, p.Body-c.Metabolism)

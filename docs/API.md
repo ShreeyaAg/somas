@@ -30,3 +30,5 @@ curl -fsS -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' 
 ```
 
 Spatial requests may set `spatial`, `auto_patches`, `agents_per_patch`, minimum `grid_width`/`grid_height`, movement costs and `harvest_access`. When automatic sizing is enabled, the manual institution count is ignored. The returned run config is normalized: patch count and dimensions may differ from the request. Snapshots include `world` geometry, each player's `position` and cumulative `moves`; peer positions are public. Schema additions need no SQLite migration. See SPATIAL.md.
+
+Snapshots may include optional `players[].activity`: per-round applied sunlight/clouds, resource costs and action totals. It is operator-scoped, not part of public peer observations. Old histories omit the field; clients must treat it as unavailable. JSON history/export preserves recorded ledgers. See INTERFACE.md.

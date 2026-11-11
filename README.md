@@ -19,6 +19,15 @@ Open **http://localhost:8080** and enter the token. Expand **Garden setup & new 
 
 If running in a directory with an invalid enclosing `.git`, use `go run -buildvcs=false ./cmd/somas`. A normal clone needs no such flag. The submission ZIP includes all source and module checksums; dependencies download on first build.
 
+On Windows, open **PowerShell** in the extracted project folder, then run:
+
+```powershell
+$env:SOMAS_GROUPS = "team1=local-testing-token-2026"
+go run ./cmd/somas
+```
+
+Open http://localhost:8080 and enter `local-testing-token-2026`. Use a unique random token for shared hosting. After updating the code, stop the old server with Ctrl+C, start it again from the updated folder and refresh the browser. An existing database may reopen a saved classic run; create a new spatial experiment to enable movement.
+
 For several groups:
 
 ```sh
@@ -29,6 +38,10 @@ go run ./cmd/somas -addr 0.0.0.0:8080 -db /persistent/somas/somas.db
 Each token must be unique and at least 16 characters. Group names are configured by the operator, never accepted from client requests. In production put a TLS reverse proxy in front of the server, restrict access to the coursework cohort, and keep tokens out of source control. Tokens are bearer credentials: anyone holding one has that group's privileges. The dashboard keeps its token in JavaScript memory only; refresh requires login again. There is no registration endpoint or default credential.
 
 ![Amoeboids dashboard](docs/dashboard.png)
+
+## Following individuals and sunlight
+
+The dashboard gives each agent a separate token and a searchable activity card, even when multiple agents share one tile. Gold/green bars show brain/body resources. A sunlight panel records real cloud-adjusted brain regeneration, and the inspector accounts for energy spent on actions and CTK. Phase explanations distinguish completed actions from the next step. The map defaults to activity focus; larger populations remain readable through zoom/scroll. See [docs/INTERFACE.md](docs/INTERFACE.md).
 
 ## Grid world and automatic patches
 

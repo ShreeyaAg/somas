@@ -101,6 +101,9 @@ func (e *Engine) moveAgents() {
 			continue
 		}
 		p.LastAction = "stay"
+		if p.Activity != nil {
+			p.Activity.MoveStatus = "stayed"
+		}
 		mover, ok := e.agents[p.ID].(Mover)
 		if !ok {
 			continue
@@ -109,6 +112,9 @@ func (e *Engine) moveAgents() {
 		// Check bounds before subtracting coordinates so adversarial int extremes
 		// cannot overflow the Manhattan-distance validation.
 		if to.X < 0 || to.Y < 0 || to.X >= e.world.Width || to.Y >= e.world.Height {
+			if p.Activity != nil {
+				p.Activity.MoveStatus = "outside world"
+			}
 			e.note(p.ID + " move rejected: outside world")
 			continue
 		}
@@ -116,10 +122,16 @@ func (e *Engine) moveAgents() {
 			continue
 		}
 		if distance(p.Position, to) != 1 {
+			if p.Activity != nil {
+				p.Activity.MoveStatus = "one cardinal step required"
+			}
 			e.note(p.ID + " move rejected: one cardinal step required")
 			continue
 		}
 		if p.Brain < e.config.MoveBrainCost || p.Body < e.config.MoveBodyCost {
+			if p.Activity != nil {
+				p.Activity.MoveStatus = "insufficient resources"
+			}
 			e.note(p.ID + " move rejected: insufficient resources")
 			continue
 		}
@@ -128,6 +140,12 @@ func (e *Engine) moveAgents() {
 		p.Moves++
 		p.Brain = max(0, p.Brain-e.config.MoveBrainCost)
 		p.Body = max(0, p.Body-e.config.MoveBodyCost)
+		if p.Activity != nil {
+			p.Activity.MoveStatus = "moved"
+			p.Activity.Moves++
+			p.Activity.MoveBrainCost += e.config.MoveBrainCost
+			p.Activity.MoveBodyCost += e.config.MoveBodyCost
+		}
 		p.LastAction = fmt.Sprintf("move (%d,%d) → (%d,%d)", from.X, from.Y, to.X, to.Y)
 		if p.Body == 0 {
 			p.Alive = false
