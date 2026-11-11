@@ -38,6 +38,10 @@ func (e *Engine) communicate() {
 					}
 				}
 				p.Brain -= e.config.MessageCost
+				if p.Activity != nil {
+					p.Activity.MessageCost += e.config.MessageCost
+					p.Activity.Messages++
+				}
 			}
 		}
 	}

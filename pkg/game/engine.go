@@ -92,7 +92,7 @@ func (e *Engine) player(id string) *Player {
 }
 func (e *Engine) observe(id string) Observation {
 	p := e.player(id)
-	v := Observation{Self: *p, World: clone(e.world), Round: e.round, Config: clone(e.config), Inbox: clone(e.inbox[id]), Institutions: clone(e.institutions)}
+	v := Observation{Self: clone(*p), World: clone(e.world), Round: e.round, Config: clone(e.config), Inbox: clone(e.inbox[id]), Institutions: clone(e.institutions)}
 	if patch := e.patchAt(p.Position); patch != nil {
 		g := clone(e.institutions[patch.Institution])
 		v.OccupiedPatch = &g
@@ -160,8 +160,17 @@ func (e *Engine) Step() bool {
 		for i := range e.players {
 			p := &e.players[i]
 			p.Contribution = 0
+			p.Activity = nil
 			if p.Alive {
-				p.Brain = min(e.config.MaxBrain, p.Brain+e.config.Sun*(1-e.rng.Float64()*e.config.Cloud))
+				a := &RoundActivity{Round: e.round, StartBrain: p.Brain, StartBody: p.Body, StartStock: p.Stock}
+				p.Activity = a
+				// This is the same single cloud draw and resource calculation as before;
+				// exposing its realized value adds no randomness or game behavior.
+				a.Cloud = e.rng.Float64() * e.config.Cloud
+				a.SunlightAvailable = e.config.Sun * (1 - a.Cloud)
+				p.Brain = min(e.config.MaxBrain, p.Brain+a.SunlightAvailable)
+				a.SunlightGain = p.Brain - a.StartBrain
+				a.SunlightBlocked = max(0, a.SunlightAvailable-a.SunlightGain)
 			}
 		}
 		e.phase = "political"
