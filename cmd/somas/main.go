@@ -68,7 +68,7 @@ func run() error {
 		}
 		defer f.Close()
 		cw := csv.NewWriter(f)
-		_ = cw.Write([]string{"seed", "round", "utility", "cpr", "alive", "ctk", "cooperation", "violations"})
+		_ = cw.Write([]string{"seed", "round", "utility", "cpr", "alive", "ctk", "cooperation", "violations", "moves"})
 		baseSeed := c.Seed
 		for i := 0; i < *repeat; i++ {
 			c.Seed = baseSeed + int64(i)
@@ -76,12 +76,12 @@ func run() error {
 			if err != nil {
 				return err
 			}
-			t := trial{Config: c, History: []game.Snapshot{e.Snapshot()}}
+			t := trial{Config: e.Config(), History: []game.Snapshot{e.Snapshot()}}
 			for e.Step() {
 				s := e.Snapshot()
 				t.History = append(t.History, s)
 				if s.Phase == "round_end" {
-					_ = cw.Write([]string{fmt.Sprint(c.Seed), fmt.Sprint(s.Round), fmt.Sprint(s.Metrics.Utility), fmt.Sprint(s.Metrics.CPR), fmt.Sprint(s.Metrics.Alive), fmt.Sprint(s.Metrics.CTK), fmt.Sprint(s.Metrics.Cooperation), fmt.Sprint(s.Metrics.Violations)})
+					_ = cw.Write([]string{fmt.Sprint(c.Seed), fmt.Sprint(s.Round), fmt.Sprint(s.Metrics.Utility), fmt.Sprint(s.Metrics.CPR), fmt.Sprint(s.Metrics.Alive), fmt.Sprint(s.Metrics.CTK), fmt.Sprint(s.Metrics.Cooperation), fmt.Sprint(s.Metrics.Violations), fmt.Sprint(s.Metrics.Moves)})
 				}
 			}
 			trials = append(trials, t)

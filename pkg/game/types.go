@@ -11,6 +11,14 @@ import (
 )
 
 type Config struct {
+	Spatial             bool       `json:"spatial"`
+	AutoPatches         bool       `json:"auto_patches"`
+	AgentsPerPatch      int        `json:"agents_per_patch"`
+	GridWidth           int        `json:"grid_width"`
+	GridHeight          int        `json:"grid_height"`
+	MoveBrainCost       float64    `json:"move_brain_cost"`
+	MoveBodyCost        float64    `json:"move_body_cost"`
+	HarvestAccess       string     `json:"harvest_access"`
 	Seed                int64      `json:"seed"`
 	Agents              int        `json:"agents"`
 	Institutions        int        `json:"institutions"`
@@ -50,9 +58,22 @@ type Config struct {
 }
 
 func DefaultConfig() Config {
-	return Config{Seed: 42, Agents: 10, Institutions: 2, Rounds: 30, Cycles: 1, ReformEvery: 10, PoliticalPasses: 3, InitialPatch: 30, Capacity: 60, InitialBrain: 3, MaxBrain: 10, InitialBody: 6, MaxBody: 12, Sun: 1.5, Cloud: .5, Metabolism: .7, MaxEat: 2, FoodToBody: 1, Rot: .02, HarvestCost: .1, ProposalCost: .05, VoteCost: .02, MessageCost: .01, MinContribution: .5, Thresholds: [4]float64{1, 2.5, 4, 5}, YieldBase: .5, YieldSlope: .2, YieldCap: 5, YieldExtra: 1, BrainUtility: .05, Revive: true, Strategies: []string{"random"}}
+	return Config{AgentsPerPatch: 5, GridWidth: 12, GridHeight: 9, MoveBrainCost: .05, MoveBodyCost: .02, HarvestAccess: "members", Seed: 42, Agents: 10, Institutions: 2, Rounds: 30, Cycles: 1, ReformEvery: 10, PoliticalPasses: 3, InitialPatch: 30, Capacity: 60, InitialBrain: 3, MaxBrain: 10, InitialBody: 6, MaxBody: 12, Sun: 1.5, Cloud: .5, Metabolism: .7, MaxEat: 2, FoodToBody: 1, Rot: .02, HarvestCost: .1, ProposalCost: .05, VoteCost: .02, MessageCost: .01, MinContribution: .5, Thresholds: [4]float64{1, 2.5, 4, 5}, YieldBase: .5, YieldSlope: .2, YieldCap: 5, YieldExtra: 1, BrainUtility: .05, Revive: true, Strategies: []string{"random"}}
 }
 func (c Config) Validate() error {
+	if c.GridWidth < 0 || c.GridWidth > 64 || c.GridHeight < 0 || c.GridHeight > 64 || c.AgentsPerPatch < 0 || c.AgentsPerPatch > 200 {
+		return errors.New("grid dimensions must be 0–64 and agents_per_patch 0–200")
+	}
+	if c.HarvestAccess != "" && c.HarvestAccess != "members" && c.HarvestAccess != "open" {
+		return errors.New("harvest_access must be members or open")
+	}
+	if c.AutoPatches && c.Agents > 0 {
+		target := c.AgentsPerPatch
+		if target == 0 {
+			target = 5
+		}
+		c.Institutions = (c.Agents + target - 1) / target
+	}
 	b, _ := json.Marshal(c)
 	if b == nil {
 		return errors.New("non-finite configuration")
@@ -60,7 +81,7 @@ func (c Config) Validate() error {
 	if c.Agents < 1 || c.Agents > 200 || c.Institutions < 1 || c.Institutions > c.Agents || c.Rounds < 1 || c.Rounds > 2000 || c.Cycles < 1 || c.Cycles > 100 || c.Rounds*c.Cycles > 10000 || c.Turns < 0 || c.Turns > 1000 || c.ReformEvery < 1 || c.PoliticalPasses < 1 || c.PoliticalPasses > 10 {
 		return errors.New("invalid population or timing limits")
 	}
-	nums := []float64{c.InitialPatch, c.InitialBrain, c.InitialBody, c.Sun, c.Cloud, c.Metabolism, c.MaxEat, c.Rot, c.HarvestCost, c.ProposalCost, c.VoteCost, c.MessageCost, c.MinContribution, c.YieldBase, c.YieldSlope, c.YieldExtra, c.BrainUtility, c.MinimumResidual}
+	nums := []float64{c.InitialPatch, c.InitialBrain, c.InitialBody, c.Sun, c.Cloud, c.Metabolism, c.MaxEat, c.Rot, c.HarvestCost, c.ProposalCost, c.VoteCost, c.MessageCost, c.MinContribution, c.YieldBase, c.YieldSlope, c.YieldExtra, c.BrainUtility, c.MinimumResidual, c.MoveBrainCost, c.MoveBodyCost}
 	for _, n := range nums {
 		if math.IsNaN(n) || math.IsInf(n, 0) || n < 0 || n > 1e6 {
 			return errors.New("resource parameters must be finite and nonnegative (<= 1e6)")
@@ -80,19 +101,39 @@ func (c Config) Validate() error {
 	return nil
 }
 
+type Position struct {
+	X int `json:"x"`
+	Y int `json:"y"`
+}
+
+// Patch describes physical cells independently of institution membership.
+type Patch struct {
+	ID          int      `json:"id"`
+	Institution int      `json:"institution"`
+	Origin      Position `json:"origin"`
+	Width       int      `json:"width"`
+	Height      int      `json:"height"`
+}
+type World struct {
+	Width   int     `json:"width"`
+	Height  int     `json:"height"`
+	Patches []Patch `json:"patches"`
+}
 type Player struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Strategy     string  `json:"strategy"`
-	Institution  int     `json:"institution"`
-	Brain        float64 `json:"brain"`
-	Body         float64 `json:"body"`
-	Stock        float64 `json:"stock"`
-	Alive        bool    `json:"alive"`
-	Utility      float64 `json:"utility"`
-	Violations   int     `json:"violations"`
-	LastAction   string  `json:"last_action"`
-	Contribution float64 `json:"contribution"`
+	Position     Position `json:"position"`
+	Moves        int      `json:"moves"`
+	ID           string   `json:"id"`
+	Name         string   `json:"name"`
+	Strategy     string   `json:"strategy"`
+	Institution  int      `json:"institution"`
+	Brain        float64  `json:"brain"`
+	Body         float64  `json:"body"`
+	Stock        float64  `json:"stock"`
+	Alive        bool     `json:"alive"`
+	Utility      float64  `json:"utility"`
+	Violations   int      `json:"violations"`
+	LastAction   string   `json:"last_action"`
+	Contribution float64  `json:"contribution"`
 }
 type Rules struct {
 	Quota         float64 `json:"quota"`
@@ -140,6 +181,7 @@ type VoteRecord struct {
 	Accepted    bool     `json:"accepted"`
 }
 type Metrics struct {
+	Moves             int     `json:"moves"`
 	Utility           float64 `json:"utility"`
 	AverageUtility    float64 `json:"average_utility"`
 	CPR               float64 `json:"cpr"`
@@ -154,6 +196,7 @@ type Metrics struct {
 	MembershipChanges int     `json:"membership_changes"`
 }
 type Snapshot struct {
+	World          World         `json:"world"`
 	PublicMessages []Message     `json:"public_messages"`
 	Round          int           `json:"round"`
 	Cycle          int           `json:"cycle"`
@@ -171,15 +214,18 @@ type Memory interface {
 	Set(string, string)
 }
 type Observation struct {
-	Self         Player
-	Peers        []PublicAgent
-	Institutions []Institution
-	Institution  Institution
-	Inbox        []Message
-	Round        int
-	Config       Config
+	OccupiedPatch *Institution // physical patch under Self, nil on a path; distinct from membership
+	World         World
+	Self          Player
+	Peers         []PublicAgent
+	Institutions  []Institution
+	Institution   Institution
+	Inbox         []Message
+	Round         int
+	Config        Config
 }
 type PublicAgent struct {
+	Position     Position
 	ID           string
 	Institution  int
 	Alive        bool
@@ -215,6 +261,13 @@ func (*Base) Propose(Observation, Memory, *rand.Rand) *Proposal     { return nil
 func (*Base) Vote(Observation, Proposal, Memory, *rand.Rand) bool   { return false }
 func (*Base) Act(Observation, Memory, *rand.Rand) Decision          { return Decision{} }
 func (*Base) Communicate(Observation, Memory, *rand.Rand) []Message { return nil }
+
+// Mover is optional: existing agents retain the Base stay-in-place policy.
+type Mover interface {
+	Move(Observation, Memory, *rand.Rand) Position
+}
+
+func (*Base) Move(o Observation, _ Memory, _ *rand.Rand) Position { return o.Self.Position }
 
 type Factory func(agent.IExposedServerFunctions[Agent]) Agent
 type Registry map[string]Factory

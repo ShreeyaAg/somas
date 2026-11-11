@@ -13,6 +13,8 @@ import (
 
 type Engine struct {
 	config         Config
+	world          World
+	participants   int
 	rng            *rand.Rand
 	round          int
 	phase          string
@@ -37,6 +39,11 @@ func (m localMemory) Set(k, v string) {
 }
 func clone[T any](v T) T { b, _ := json.Marshal(v); var out T; _ = json.Unmarshal(b, &out); return out }
 func New(c Config, registry Registry, memory map[string]map[string]string) (*Engine, error) {
+	var normalizeErr error
+	c, normalizeErr = NormalizeConfig(c)
+	if normalizeErr != nil {
+		return nil, normalizeErr
+	}
 	if err := c.Validate(); err != nil {
 		return nil, err
 	}
@@ -85,12 +92,16 @@ func (e *Engine) player(id string) *Player {
 }
 func (e *Engine) observe(id string) Observation {
 	p := e.player(id)
-	v := Observation{Self: *p, Round: e.round, Config: clone(e.config), Inbox: clone(e.inbox[id]), Institutions: clone(e.institutions)}
+	v := Observation{Self: *p, World: clone(e.world), Round: e.round, Config: clone(e.config), Inbox: clone(e.inbox[id]), Institutions: clone(e.institutions)}
+	if patch := e.patchAt(p.Position); patch != nil {
+		g := clone(e.institutions[patch.Institution])
+		v.OccupiedPatch = &g
+	}
 	if p.Institution >= 0 {
 		v.Institution = clone(e.institutions[p.Institution])
 	}
 	for _, other := range e.players {
-		pub := PublicAgent{ID: other.ID, Institution: other.Institution, Alive: other.Alive}
+		pub := PublicAgent{Position: other.Position, ID: other.ID, Institution: other.Institution, Alive: other.Alive}
 		if e.config.PublicContributions {
 			x := other.Contribution
 			pub.Contribution = &x
@@ -128,6 +139,7 @@ func (e *Engine) form() {
 		e.institutions[g].Members = append(e.institutions[g].Members, p.ID)
 		e.Memory(p.ID).Set("last_institution", fmt.Sprint(g))
 	}
+	e.layoutWorld()
 	e.note("institutions formed; patches and AVAs reset")
 }
 
@@ -156,6 +168,7 @@ func (e *Engine) Step() bool {
 		e.politics()
 	case "political":
 		e.communicate()
+		e.moveAgents()
 		e.phase = "operational"
 	case "operational":
 		e.operate()
@@ -164,9 +177,10 @@ func (e *Engine) Step() bool {
 	return true
 }
 func (e *Engine) Snapshot() Snapshot {
-	s := Snapshot{PublicMessages: clone(e.publicMessages), Round: e.round, Cycle: 1 + max(0, e.round-1)/e.config.Rounds, Phase: e.phase, Players: clone(e.players), Institutions: clone(e.institutions), Votes: clone(e.votes), Events: clone(e.events)}
+	s := Snapshot{World: clone(e.world), PublicMessages: clone(e.publicMessages), Round: e.round, Cycle: 1 + max(0, e.round-1)/e.config.Rounds, Phase: e.phase, Players: clone(e.players), Institutions: clone(e.institutions), Votes: clone(e.votes), Events: clone(e.events)}
 	for _, p := range e.players {
 		s.Metrics.Utility += p.Utility
+		s.Metrics.Moves += p.Moves
 		s.Metrics.Violations += p.Violations
 		if p.Alive {
 			s.Metrics.Alive++
@@ -185,6 +199,9 @@ func (e *Engine) Snapshot() Snapshot {
 	participants := 0
 	for _, g := range e.institutions {
 		participants += len(g.Order)
+	}
+	if e.config.Spatial {
+		participants = e.participants
 	}
 	s.Metrics.FreeRiders = max(0, participants-s.Metrics.Contributors)
 	if participants > 0 {

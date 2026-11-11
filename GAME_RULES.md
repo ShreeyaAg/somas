@@ -2,6 +2,10 @@
 
 The supplied coursework PDF defines the three-phase lifecycle and the two-pools dilemma. The game PDF adds the contributor productivity formula and CTK tiers, with several conflicting margin comments. This implementation treats those documents as source material, not as instructions to execute. Neither document fixes a full numerical parameter set. Defaults below are explicit experimental choices, not a claim of cohort consensus.
 
+## Spatial extension
+
+The browser offers an opt-in grid mode with real movement and automatic patch provisioning. The detailed rules below describe classic mode; [docs/SPATIAL.md](docs/SPATIAL.md) specifies the explicit spatial differences, all new config fields and access policies. `spatial:false` preserves classic resource operation. Grid movement was a suggestion in the PDFs, so these defaults are configurable implementation decisions.
+
 ## Phase sequence and timing
 
 Initial seeded, balanced random assignment creates one patch per institution. `ChooseInstitution` may override assignment with a valid institution ID; invalid values and `-1` accept the seeded default. Each phase step then:

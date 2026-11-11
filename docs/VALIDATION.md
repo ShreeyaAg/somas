@@ -51,3 +51,13 @@ A repeated random batch produced **byte-identical JSON** using the same binary/c
 ## Known limits
 
 No untrusted code execution/upload, no resumable process checkpoint, no independent per-agent execution timeout, no sanctions/auditing/trading/reproduction and no automatic cross-group publication. Web snapshots persist after each phase; an abrupt process failure may lose only the currently executing uncommitted phase. Active strategy object fields and RNG state are not serialized. The included tests do not prove isolation against malicious compiled Go code, nor throughput at the configured maximum population/round limits. See SECURITY.md and GAME_RULES.md for the exact boundaries.
+
+## Spatial extension validation
+
+The spatial revision adds automatic patch/map sizing, cardinal movement, physical harvesting access and a shared grid renderer. `go test -race ./...` and `go vet ./...` were rerun. New tests cover population sizes 1, 5, 6, 10, 50 and 200; non-overlapping in-bounds patches and valid spawning; movement distances, rejected coordinates, affordability and costs; open/member-only harvesting; home-institution CTK accounting while visiting; provisioning-based free-rider counts; copied world observations; backward-compatible Base movement; seeded mixed spatial strategies; and equivalence with the university lifecycle adapter. A latent test-only race was corrected by making direct API test helpers take the same mutex as production HTTP handlers and scheduler.
+
+`scripts/browser_spatial.py` verified 12 agents at target 4 produce 3 patches, and 100 agents at target 5 produce 20 patches with no manual layout. It checks actual position changes from backend state, patch/agent selection, zoom, play, replay, reset, and a 390px viewport without page overflow; no browser errors remained. `scripts/browser_smoke.py` was updated for the shared-grid DOM and rerun. Use the same `SOMAS_TEST_URL` and `SOMAS_TEST_TOKEN` variables as above. Current dashboard screenshots are from this running spatial implementation. The table above is the classic-mode baseline and is not evidence about spatial-policy performance.
+
+The main scalability improvement is automatic provisioning, not a claim of unlimited throughput: limits remain 200 agents, one Go scheduler and SQLite. Spatial rules and configurable defaults are detailed in SPATIAL.md. Agents are added at experiment creation; no live agent insertion is implemented.
+
+A headless mixed-strategy check with **200 agents and 40 automatically provisioned patches** completed for three rounds. Running it twice yielded byte-identical JSON, including canonical exported configuration. This is a functional size check, not a sustained-load benchmark.

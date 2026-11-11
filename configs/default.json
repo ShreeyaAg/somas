@@ -41,5 +41,13 @@
   "public_contributions": false,
   "strategies": [
     "random"
-  ]
+  ],
+  "spatial": false,
+  "auto_patches": false,
+  "agents_per_patch": 5,
+  "grid_width": 12,
+  "grid_height": 9,
+  "move_brain_cost": 0.05,
+  "move_body_cost": 0.02,
+  "harvest_access": "members"
 }

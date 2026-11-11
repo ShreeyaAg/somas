@@ -17,8 +17,8 @@ with sync_playwright() as p:
   page.get_by_role('button',name='Create experiment',exact=True).click()
  run_id=created.value.json()['id']
  expect(page.locator('#experiments')).to_have_value(run_id)
- page.wait_for_selector('.garden')
- assert page.locator('.garden').count()==2
+ page.wait_for_selector('.map-patch')
+ assert page.locator('.map-patch').count()==2
  page.locator('[data-action=step]').click()
  expect(page.locator("#phase")).to_have_text("political")
  page.locator('.agent-row').first.click()
@@ -38,5 +38,5 @@ with sync_playwright() as p:
  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
  assert not errors,errors
  assert page.locator('#error').is_hidden(),page.locator('#error').inner_text()
- print('PASS: login, create, two gardens, politics, inspector, speed/play, complete, replay, reset, responsive layout; no JS errors')
+ print('PASS: login, create, two spatial patches, politics, inspector, speed/play, complete, replay, reset, responsive layout; no JS errors')
  b.close()

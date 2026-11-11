@@ -37,3 +37,7 @@ https://somas.sites.moonissolutions.net/ was attempted via HTTP; the connection 
 ## Reuse and provenance
 
 This is a fresh implementation informed by the reviewed references, with the upstream university library used as a pinned module dependency. It has no dependency on the two supplied source archives at runtime. No unverified licence is assumed for copying student code or Moonis artwork. `docs/THIRD_PARTY.md` records direct third-party dependencies; their upstream licence files remain available in the downloaded module cache.
+
+## Spatial revision follow-up
+
+The user subsequently requested a grid world with actual movement and automatic population-based patch sizing. GAMINpanda's public default-branch tree was rechecked at commit `781444c74bce5dbd63b76da01b4647a0b43b2a27`; the available Go source still exposes the earlier single-pool structure rather than an implemented grid UI. We therefore treat the requested grid as a new explicit extension inspired by the user's direction, not as verified GAMINpanda behavior. Movement costs, geometry, visitor access and population sizing decisions are documented separately in SPATIAL.md; the classic engine remains available.
